@@ -2,6 +2,7 @@
 Self-Healing RL Recommendation Agent — Reddit Data Scraper
 Scrapes live posts from Reddit using PRAW (with API keys) or public JSON (fallback)
 """
+
 import os
 import sys
 import json
@@ -14,39 +15,47 @@ from typing import List, Dict, Optional
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import *
 
+
 class RedditScraper:
     """Scrapes Reddit posts using PRAW or public JSON API fallback"""
-    
+
     def __init__(self):
         self.use_praw = False
         self.praw_reddit = None
         self._init_praw()
-    
+
     def _init_praw(self):
         """Try to initialize PRAW, fallback to public JSON if no credentials"""
         if REDDIT_CLIENT_ID != "YOUR_CLIENT_ID_HERE":
             try:
                 import praw
+
                 self.praw_reddit = praw.Reddit(
                     client_id=REDDIT_CLIENT_ID,
                     client_secret=REDDIT_CLIENT_SECRET,
-                    user_agent=REDDIT_USER_AGENT
+                    user_agent=REDDIT_USER_AGENT,
                 )
                 self.use_praw = True
                 print("✅ Reddit API: Using PRAW (authenticated)")
             except Exception as e:
                 print(f"⚠️  PRAW failed: {e}. Falling back to public JSON API.")
         else:
-            print("⚠️  Reddit API: No credentials found. Using public JSON API (rate-limited).")
-            print("   Set credentials in config.py or environment variables for better performance.")
-    
-    def fetch_posts(self, subreddit: str, limit: int = 25, sort: str = "hot") -> List[Dict]:
+            print(
+                "⚠️  Reddit API: No credentials found. Using public JSON API (rate-limited)."
+            )
+            print(
+                "   Set credentials in config.py or environment variables for better performance."
+            )
+
+    def fetch_posts(
+        self, subreddit: str, limit: int = 25, sort: str = "hot"
+    ) -> List[Dict]:
         """Fetch posts from a subreddit"""
         if self.use_praw:
             return self._fetch_praw(subreddit, limit, sort)
         else:
             return self._fetch_json(subreddit, limit, sort)
-    
+
     def _fetch_praw(self, subreddit: str, limit: int, sort: str) -> List[Dict]:
         """Fetch using PRAW (authenticated, higher rate limits)"""
         try:
@@ -59,100 +68,114 @@ class RedditScraper:
                 posts = sub.top(limit=limit, time_filter="day")
             else:
                 posts = sub.hot(limit=limit)
-            
+
             results = []
             for post in posts:
                 if post.stickied:
                     continue
-                results.append({
-                    "id": post.id,
-                    "title": post.title,
-                    "subreddit": subreddit,
-                    "score": post.score,
-                    "upvote_ratio": post.upvote_ratio,
-                    "num_comments": post.num_comments,
-                    "created_utc": post.created_utc,
-                    "url": post.url,
-                    "selftext": post.selftext[:200] if post.selftext else "",
-                    "scraped_at": datetime.now().isoformat(),
-                    "engagement_score": self._calc_engagement(post.score, post.num_comments, post.upvote_ratio)
-                })
+                results.append(
+                    {
+                        "id": post.id,
+                        "title": post.title,
+                        "subreddit": subreddit,
+                        "score": post.score,
+                        "upvote_ratio": post.upvote_ratio,
+                        "num_comments": post.num_comments,
+                        "created_utc": post.created_utc,
+                        "url": post.url,
+                        "selftext": post.selftext[:200] if post.selftext else "",
+                        "scraped_at": datetime.now().isoformat(),
+                        "engagement_score": self._calc_engagement(
+                            post.score, post.num_comments, post.upvote_ratio
+                        ),
+                    }
+                )
             return results
         except Exception as e:
             print(f"  ❌ PRAW error on r/{subreddit}: {e}")
             return self._fetch_json(subreddit, limit, sort)
-    
+
     def _fetch_json(self, subreddit: str, limit: int, sort: str) -> List[Dict]:
         """Fetch using public JSON API (no auth needed, rate-limited)"""
         try:
             url = f"https://www.reddit.com/r/{subreddit}/{sort}.json?limit={limit}"
             headers = {"User-Agent": REDDIT_USER_AGENT}
             resp = requests.get(url, headers=headers, timeout=10)
-            
+
             if resp.status_code == 429:
                 print(f"  ⚠️  Rate limited on r/{subreddit}. Waiting 2s...")
                 time.sleep(2)
                 resp = requests.get(url, headers=headers, timeout=10)
-            
+
             if resp.status_code != 200:
                 print(f"  ❌ HTTP {resp.status_code} on r/{subreddit}")
                 return []
-            
+
             data = resp.json()
             results = []
             for child in data.get("data", {}).get("children", []):
                 post = child["data"]
                 if post.get("stickied", False):
                     continue
-                results.append({
-                    "id": post["id"],
-                    "title": post["title"],
-                    "subreddit": subreddit,
-                    "score": post.get("score", 0),
-                    "upvote_ratio": post.get("upvote_ratio", 0.5),
-                    "num_comments": post.get("num_comments", 0),
-                    "created_utc": post.get("created_utc", 0),
-                    "url": post.get("url", ""),
-                    "selftext": post.get("selftext", "")[:200],
-                    "scraped_at": datetime.now().isoformat(),
-                    "engagement_score": self._calc_engagement(
-                        post.get("score", 0), 
-                        post.get("num_comments", 0), 
-                        post.get("upvote_ratio", 0.5)
-                    )
-                })
-            
+                results.append(
+                    {
+                        "id": post["id"],
+                        "title": post["title"],
+                        "subreddit": subreddit,
+                        "score": post.get("score", 0),
+                        "upvote_ratio": post.get("upvote_ratio", 0.5),
+                        "num_comments": post.get("num_comments", 0),
+                        "created_utc": post.get("created_utc", 0),
+                        "url": post.get("url", ""),
+                        "selftext": post.get("selftext", "")[:200],
+                        "scraped_at": datetime.now().isoformat(),
+                        "engagement_score": self._calc_engagement(
+                            post.get("score", 0),
+                            post.get("num_comments", 0),
+                            post.get("upvote_ratio", 0.5),
+                        ),
+                    }
+                )
+
             time.sleep(1)  # Be respectful of rate limits
             return results
         except Exception as e:
             print(f"  ❌ JSON API error on r/{subreddit}: {e}")
             return []
-    
-    def _calc_engagement(self, score: int, num_comments: int, upvote_ratio: float) -> float:
+
+    def _calc_engagement(
+        self, score: int, num_comments: int, upvote_ratio: float
+    ) -> float:
         """Calculate normalized engagement score (0-1)"""
         # Combine upvotes, comments, and ratio into a single engagement metric
         score_norm = min(score / 1000, 1.0)  # Cap at 1000 upvotes
         comments_norm = min(num_comments / 200, 1.0)  # Cap at 200 comments
         ratio_norm = upvote_ratio  # Already 0-1
-        
+
         engagement = 0.4 * score_norm + 0.3 * comments_norm + 0.3 * ratio_norm
         return round(engagement, 4)
-    
-    def fetch_multi_subreddit(self, subreddits: List[str], limit_per_sub: int = 20) -> List[Dict]:
+
+    def fetch_multi_subreddit(
+        self, subreddits: List[str], limit_per_sub: int = 20
+    ) -> List[Dict]:
         """Fetch from multiple subreddits"""
         all_posts = []
         for sub in subreddits:
             posts = self.fetch_posts(sub, limit=limit_per_sub)
             all_posts.extend(posts)
-            print(f"  📥 r/{sub}: {len(posts)} posts (avg engagement: {sum(p['engagement_score'] for p in posts)/max(len(posts),1):.3f})")
-        
+            print(
+                f"  📥 r/{sub}: {len(posts)} posts (avg engagement: {sum(p['engagement_score'] for p in posts)/max(len(posts),1):.3f})"
+            )
+
         random.shuffle(all_posts)
         return all_posts
 
 
-def generate_synthetic_reddit_data(subreddits: List[str], n_per_sub: int = 50) -> List[Dict]:
+def generate_synthetic_reddit_data(
+    subreddits: List[str], n_per_sub: int = 50
+) -> List[Dict]:
     """Generate synthetic Reddit-like data for offline testing (no API needed)"""
-    
+
     TEMPLATES = {
         "technology": [
             "New AI model outperforms GPT-4 on benchmarks",
@@ -279,17 +302,21 @@ def generate_synthetic_reddit_data(subreddits: List[str], n_per_sub: int = 50) -
             "Space station visible passes this month",
         ],
     }
-    
+
     all_posts = []
     for sub in subreddits:
-        templates = TEMPLATES.get(sub, [f"Post about {sub} topic {i}" for i in range(10)])
+        templates = TEMPLATES.get(
+            sub, [f"Post about {sub} topic {i}" for i in range(10)]
+        )
         for i in range(n_per_sub):
             template = random.choice(templates)
             # Add variation
             prefix = random.choice(["", "[Discussion] ", "[News] ", "[OC] ", ""])
-            suffix = random.choice(["", " - thoughts?", " - what do you think?", "", ""])
+            suffix = random.choice(
+                ["", " - thoughts?", " - what do you think?", "", ""]
+            )
             title = prefix + template + suffix
-            
+
             # Generate realistic engagement scores
             if sub in TRAINING_SUBREDDITS:
                 score = random.randint(50, 5000)
@@ -299,23 +326,29 @@ def generate_synthetic_reddit_data(subreddits: List[str], n_per_sub: int = 50) -
                 score = random.randint(10, 2000)
                 comments = random.randint(5, 200)
                 ratio = random.uniform(0.5, 0.95)
-            
-            engagement = min(score/1000, 1.0) * 0.4 + min(comments/200, 1.0) * 0.3 + ratio * 0.3
-            
-            all_posts.append({
-                "id": f"synth_{sub}_{i}",
-                "title": title,
-                "subreddit": sub,
-                "score": score,
-                "upvote_ratio": round(ratio, 2),
-                "num_comments": comments,
-                "created_utc": time.time() - random.randint(0, 86400),
-                "url": f"https://reddit.com/r/{sub}/synth_{i}",
-                "selftext": "",
-                "scraped_at": datetime.now().isoformat(),
-                "engagement_score": round(engagement, 4)
-            })
-    
+
+            engagement = (
+                min(score / 1000, 1.0) * 0.4
+                + min(comments / 200, 1.0) * 0.3
+                + ratio * 0.3
+            )
+
+            all_posts.append(
+                {
+                    "id": f"synth_{sub}_{i}",
+                    "title": title,
+                    "subreddit": sub,
+                    "score": score,
+                    "upvote_ratio": round(ratio, 2),
+                    "num_comments": comments,
+                    "created_utc": time.time() - random.randint(0, 86400),
+                    "url": f"https://reddit.com/r/{sub}/synth_{i}",
+                    "selftext": "",
+                    "scraped_at": datetime.now().isoformat(),
+                    "engagement_score": round(engagement, 4),
+                }
+            )
+
     random.shuffle(all_posts)
     return all_posts
 
@@ -323,13 +356,17 @@ def generate_synthetic_reddit_data(subreddits: List[str], n_per_sub: int = 50) -
 if __name__ == "__main__":
     scraper = RedditScraper()
     print("\n🔍 Testing Reddit Scraper...")
-    
+
     if scraper.use_praw:
-        posts = scraper.fetch_multi_subreddit(["technology", "science"], limit_per_sub=5)
+        posts = scraper.fetch_multi_subreddit(
+            ["technology", "science"], limit_per_sub=5
+        )
     else:
         print("   Using synthetic data for testing (no API credentials)")
         posts = generate_synthetic_reddit_data(["technology", "science"], n_per_sub=5)
-    
+
     print(f"\n📊 Fetched {len(posts)} posts")
     for p in posts[:5]:
-        print(f"   [{p['engagement_score']:.3f}] r/{p['subreddit']}: {p['title'][:60]}...")
+        print(
+            f"   [{p['engagement_score']:.3f}] r/{p['subreddit']}: {p['title'][:60]}..."
+        )

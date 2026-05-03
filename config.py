@@ -3,6 +3,7 @@ Self-Healing RL Recommendation Agent — Configuration
 Fill in your Reddit API credentials before running.
 Get them at: https://www.reddit.com/prefs/apps (create a "script" type app)
 """
+
 import os
 
 # ============================================================
@@ -10,7 +11,9 @@ import os
 # ============================================================
 REDDIT_CLIENT_ID = os.environ.get("REDDIT_CLIENT_ID", "YOUR_CLIENT_ID_HERE")
 REDDIT_CLIENT_SECRET = os.environ.get("REDDIT_CLIENT_SECRET", "YOUR_CLIENT_SECRET_HERE")
-REDDIT_USER_AGENT = os.environ.get("REDDIT_USER_AGENT", "SelfHealingRL/1.0 by YOUR_USERNAME")
+REDDIT_USER_AGENT = os.environ.get(
+    "REDDIT_USER_AGENT", "SelfHealingRL/1.0 by YOUR_USERNAME"
+)
 
 # ============================================================
 # SUBREDDIT CONFIGURATION
@@ -30,17 +33,17 @@ CATEGORIES = TRAINING_SUBREDDITS + DRIFT_SUBREDDITS + HEAVY_DRIFT_SUBREDDITS
 # ============================================================
 # RL AGENT SETTINGS
 # ============================================================
-STATE_DIM = 64          # Embedding dimension for post features
+STATE_DIM = 64  # Embedding dimension for post features
 ACTION_DIM = len(TRAINING_SUBREDDITS)  # Number of recommendation categories
-HIDDEN_DIM = 128        # Hidden layer size
+HIDDEN_DIM = 128  # Hidden layer size
 LEARNING_RATE = 1e-3
-GAMMA = 0.99            # Discount factor
-EPSILON_START = 1.0     # Exploration rate start
-EPSILON_END = 0.05      # Exploration rate end
-EPSILON_DECAY = 0.995   # Exploration decay per episode
+GAMMA = 0.99  # Discount factor
+EPSILON_START = 1.0  # Exploration rate start
+EPSILON_END = 0.05  # Exploration rate end
+EPSILON_DECAY = 0.995  # Exploration decay per episode
 BATCH_SIZE = 32
 MEMORY_SIZE = 10000
-TARGET_UPDATE = 10      # Update target network every N episodes
+TARGET_UPDATE = 10  # Update target network every N episodes
 
 # ============================================================
 # SERVER SETTINGS
@@ -52,9 +55,9 @@ DB_NAME = "rl_predictions.db"
 # ============================================================
 # MONITORING THRESHOLDS
 # ============================================================
-REWARD_DROP_THRESHOLD = 0.25       # Alert if mean reward drops by this much
-ENGAGEMENT_THRESHOLD = 0.30        # Alert if engagement rate drops below this
-LOW_REWARD_PCT_THRESHOLD = 0.40    # Alert if >40% of recommendations have low reward
+REWARD_DROP_THRESHOLD = 0.25  # Alert if mean reward drops by this much
+ENGAGEMENT_THRESHOLD = 0.30  # Alert if engagement rate drops below this
+LOW_REWARD_PCT_THRESHOLD = 0.40  # Alert if >40% of recommendations have low reward
 
 # ============================================================
 # PIPELINE DIRECTORY (auto-detected)
