@@ -1,19 +1,25 @@
 # 🤖 Self-Healing RL Recommendation Agent
 
-A **reinforcement learning** content recommendation system that autonomously detects when its recommendations start failing, diagnoses the root cause, retrains itself, and verifies the fix — using **MCP** for tool access and **A2A** for multi-agent coordination.
+**A reinforcement learning content recommendation system that autonomously detects when its recommendations start failing, diagnoses the root cause, retrains itself, and verifies the fix. Uses MCP for tool access and A2A (Agent-to-Agent) protocol for multi-agent coordination.**
+
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/riya0920/self-healing-rl-pipeline/blob/main/LICENSE)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 ## The Problem
 
-RL recommendation agents are trained on historical user behavior. When user preferences shift — new topics trend, seasonal changes occur, or the content distribution changes — the agent's learned policy becomes stale. In production, this means **bad recommendations, dropping engagement, and lost revenue.**
+RL recommendation agents are trained on historical user behavior. When user preferences shift (new topics trend, seasonal changes occur, or the content distribution changes), the agent's learned policy becomes stale. In production, this means **bad recommendations, dropping engagement, and lost revenue.**
 
 Most systems rely on humans to notice the degradation, diagnose the issue, and manually retrain. **This system does it autonomously.**
 
 ## How It Works
 
 ### The RL Agent
+
 A **Deep Q-Network (DQN)** learns which content categories to recommend to maximize user engagement. Trained on Reddit post data from subreddits like r/technology, r/sports, r/politics, r/science.
 
 ### The Drift
+
 When the content stream shifts to domains the agent has never seen (r/cooking, r/fitness, r/legaladvice), the agent's recommendations become irrelevant. Reward drops. Relevance tanks.
 
 ### The Self-Healing Loop
@@ -26,7 +32,7 @@ Monitor Agent    → watches reward curves, detects engagement drops
 Diagnostics Agent → analyzes logs via MCP: "75% OOD posts detected"
                          ↓ (root cause identified)
 Repair Agent     → retrains DQN on clean training data, deploys new version
-                         ↓ (fix applied)  
+                         ↓ (fix applied)
 Verification Agent → validates new model, approves or sends back
 ```
 
@@ -45,7 +51,7 @@ Verification Agent → validates new model, approves or sends back
 
 🔧 Repair: Retrained RL policy, new version deployed
 
-✔️ Verification: reward=0.4224, relevance=42% — APPROVED
+✔️ Verification: reward=0.4224, relevance=42%, status=APPROVED
 
 ✅ System self-healed autonomously
 ```
@@ -53,7 +59,7 @@ Verification Agent → validates new model, approves or sends back
 ## Architecture
 
 ```
-rl_pipeline/
+self-healing-rl-pipeline/
 ├── config.py                # Reddit API credentials + all settings
 ├── scraper.py               # Reddit data scraper (PRAW + JSON fallback)
 ├── rl_agent.py              # DQN agent (PyTorch) with replay buffer
@@ -80,7 +86,7 @@ rl_pipeline/
 # Install dependencies
 pip install -r requirements.txt
 
-# Set Reddit API credentials (optional — works without them using synthetic data)
+# Set Reddit API credentials (optional, works without them using synthetic data)
 export REDDIT_CLIENT_ID=your_id
 export REDDIT_CLIENT_SECRET=your_secret
 
@@ -90,7 +96,7 @@ python train_initial.py
 # 2. Start the server (Terminal 1)
 python -m uvicorn server:app --port 8000
 
-# 3. Run drift simulation (Terminal 2)
+# 3. Run drift simulation with intensity 0.3 (Terminal 2)
 python drift_simulator.py 0.3
 
 # 4. Run self-healing agents (Terminal 2, after drift finishes)
@@ -103,7 +109,7 @@ python -m streamlit run dashboard.py
 ## Tech Stack
 
 | Component | Technology |
-|-----------|-----------|
+| --- | --- |
 | RL Agent | PyTorch DQN with experience replay + target network |
 | Data | Reddit API (PRAW) with synthetic fallback |
 | Serving | FastAPI + Uvicorn |
@@ -116,13 +122,15 @@ python -m streamlit run dashboard.py
 ## Drift Phases
 
 | Phase | Data Source | Expected RL Agent Behavior |
-|-------|-----------|---------------------------|
+| --- | --- | --- |
 | 1: In-Distribution | r/technology, r/sports, r/politics, r/science | High reward, good relevance |
 | 2: Mild Drift | r/cooking, r/fitness, r/legaladvice, r/medicine | Reward drops, wrong recommendations |
 | 3: Heavy Drift | r/philosophy, r/art, r/gardening, r/astronomy | Very low reward, category collapse |
 | 4: Mixed Chaos | All subreddits randomly | Complete confusion |
 
 ## Agent Communication (A2A Protocol)
+
+Each agent communicates via JSON messages over HTTP. Example task handoff from Monitor to Diagnostics:
 
 ```json
 {
@@ -140,14 +148,18 @@ python -m streamlit run dashboard.py
 
 ## Reddit API Setup (Optional)
 
-1. Go to https://www.reddit.com/prefs/apps
-2. Click "create app" → select "script"
+1. Go to <https://www.reddit.com/prefs/apps>
+2. Click "create app" then select "script"
 3. Copy `client_id` and `client_secret`
 4. Set in `config.py` or as environment variables
 
 Without API credentials, the system uses realistic synthetic Reddit data.
 
+## License
+
+MIT
+
 ## Author
 
-**Riya Soni** — MS Computer Science, Stevens Institute of Technology  
-[GitHub](https://github.com/riya0920) | [LinkedIn](https://linkedin.com/in/riya-soni-ml-engineer)
+**Riya Soni** · MS Computer Science, Stevens Institute of Technology  
+[GitHub](https://github.com/riya0920) · [LinkedIn](https://linkedin.com/in/riya-soni-ml-engineer)
