@@ -13,6 +13,7 @@ from agents.repair_agent import RepairAgent
 from agents.verification_agent import VerificationAgent
 from mcp.tools import MCPTools
 from config import *
+from observability import traceable, status_line
 
 
 class SelfHealingOrchestrator:
@@ -25,6 +26,7 @@ class SelfHealingOrchestrator:
         self.healing_cycles = 0
         self.message_log = []
 
+    @traceable(run_type="chain", name="self_healing_cycle")
     def run_healing_cycle(self, window: int = 50) -> bool:
         print(f"\n{'='*70}")
         print(f"🔄 SELF-HEALING CYCLE #{self.healing_cycles + 1}")
@@ -98,6 +100,7 @@ if __name__ == "__main__":
     orchestrator = SelfHealingOrchestrator()
 
     print("🎬 Self-Healing RL Recommendation Agent")
+    print(status_line())
     print("Run these in separate terminals:")
     print("  1. python server.py")
     print("  2. python train_initial.py")

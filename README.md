@@ -67,6 +67,8 @@ self-healing-rl-pipeline/
 ├── train_initial.py         # Initial RL agent training script
 ├── drift_simulator.py       # 4-phase drift simulation
 ├── dashboard.py             # Streamlit real-time monitoring
+├── observability.py         # LangSmith tracing wrapper (no-op when disabled)
+├── .env.example             # Reddit + LangSmith environment variables
 ├── requirements.txt
 ├── agents/
 │   ├── monitor_agent.py     # Watches reward curves + engagement
@@ -89,6 +91,10 @@ pip install -r requirements.txt
 # Set Reddit API credentials (optional, works without them using synthetic data)
 export REDDIT_CLIENT_ID=your_id
 export REDDIT_CLIENT_SECRET=your_secret
+
+# Enable LangSmith tracing (optional — leave unset to run without it)
+export LANGSMITH_API_KEY=lsv2_...        # from https://smith.langchain.com/settings
+export LANGSMITH_PROJECT=self-healing-rl
 
 # 1. Train the RL agent
 python train_initial.py
@@ -116,6 +122,7 @@ python -m streamlit run dashboard.py
 | Storage | SQLite (recommendations, metrics, agent actions, model registry) |
 | Agent Coordination | A2A Protocol (JSON-over-HTTP, agent cards) |
 | Tool Access | MCP (Model Context Protocol) |
+| Observability | LangSmith tracing of every healing cycle |
 | Dashboard | Streamlit (4 tabs: performance, agents, logs, registry) |
 | Drift Detection | Reward monitoring, OOD detection, category collapse |
 
@@ -145,6 +152,29 @@ Each agent communicates via JSON messages over HTTP. Example task handoff from M
   }
 }
 ```
+
+## Observability (LangSmith)
+
+Every self-healing run is traced with [LangSmith](https://smith.langchain.com).
+Set `LANGSMITH_API_KEY` and each cycle appears as a single nested trace:
+
+```
+self_healing_cycle
+├── monitor.detect_drift
+│   ├── mcp.get_recent_metrics
+│   └── mcp.get_reward_distribution      # OOD + reward-distribution analysis
+├── diagnostics.investigate
+├── repair.execute
+│   └── mcp.retrain_rl_agent             # DQN retrain + versioned deploy
+└── verification.verify
+    └── mcp.run_validation               # reward/relevance thresholds
+```
+
+This gives per-agent latency, inputs/outputs, and root-cause payloads for
+every drift → diagnose → repair → verify loop. Tracing is fully optional:
+`observability.py` degrades to a **no-op** when `langsmith` is not installed
+or `LANGSMITH_API_KEY` is unset, so the pipeline runs unchanged either way.
+Set `LANGSMITH_TRACING=false` to force it off even with a key present.
 
 ## Reddit API Setup (Optional)
 

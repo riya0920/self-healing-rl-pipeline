@@ -60,6 +60,14 @@ ENGAGEMENT_THRESHOLD = 0.30  # Alert if engagement rate drops below this
 LOW_REWARD_PCT_THRESHOLD = 0.40  # Alert if >40% of recommendations have low reward
 
 # ============================================================
+# OBSERVABILITY — LANGSMITH
+# ============================================================
+# Tracing turns on automatically when LANGSMITH_API_KEY is set in the
+# environment (see .env.example). Leave it unset to run with tracing off.
+LANGSMITH_API_KEY = os.environ.get("LANGSMITH_API_KEY", "")
+LANGSMITH_PROJECT = os.environ.get("LANGSMITH_PROJECT", "self-healing-rl")
+
+# ============================================================
 # PIPELINE DIRECTORY (auto-detected)
 # ============================================================
 PIPELINE_DIR = os.path.dirname(os.path.abspath(__file__))

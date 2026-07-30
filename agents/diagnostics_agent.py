@@ -10,6 +10,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from a2a.protocol import *
 from mcp.tools import MCPTools
 from config import *
+from observability import traceable
 
 
 class DiagnosticsAgent:
@@ -17,6 +18,7 @@ class DiagnosticsAgent:
         self.card = AGENT_CARDS["diagnostics"]
         self.tools = MCPTools()
 
+    @traceable(run_type="chain", name="diagnostics.investigate")
     def investigate(self, message: A2AMessage) -> A2AMessage:
         print(f"\n  🔬 Diagnostics: Investigating...")
         print_message(message, prefix="  📥 ")

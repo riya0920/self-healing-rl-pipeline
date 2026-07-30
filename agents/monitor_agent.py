@@ -9,6 +9,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from a2a.protocol import *
 from mcp.tools import MCPTools
 from config import *
+from observability import traceable
 
 
 class MonitorAgent:
@@ -17,6 +18,7 @@ class MonitorAgent:
         self.tools = MCPTools()
         self.drift_detected = False
 
+    @traceable(run_type="chain", name="monitor.detect_drift")
     def check_for_drift(self, window: int = 50) -> Optional[A2AMessage]:
         metrics = self.tools.get_recent_metrics(window=window)
 

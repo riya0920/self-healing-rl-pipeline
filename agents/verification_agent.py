@@ -8,6 +8,7 @@ import os, sys, json
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from a2a.protocol import *
 from mcp.tools import MCPTools
+from observability import traceable
 
 MIN_REWARD_THRESHOLD = 0.25
 MIN_RELEVANCE_THRESHOLD = 0.15
@@ -20,6 +21,7 @@ class VerificationAgent:
         self.verification_count = 0
         self.max_retries = 3
 
+    @traceable(run_type="chain", name="verification.verify")
     def verify_repair(self, message: A2AMessage) -> A2AMessage:
         print(f"\n  ✔️  Verification: Validating...")
         print_message(message, prefix="  📥 ")

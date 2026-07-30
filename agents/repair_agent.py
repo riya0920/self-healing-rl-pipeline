@@ -8,6 +8,7 @@ import os, sys, json
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from a2a.protocol import *
 from mcp.tools import MCPTools
+from observability import traceable
 
 
 class RepairAgent:
@@ -16,6 +17,7 @@ class RepairAgent:
         self.tools = MCPTools()
         self.repair_count = 0
 
+    @traceable(run_type="chain", name="repair.execute")
     def execute_repair(self, message: A2AMessage) -> A2AMessage:
         print(f"\n  🔧 Repair Agent: Executing...")
         print_message(message, prefix="  📥 ")

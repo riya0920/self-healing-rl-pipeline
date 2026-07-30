@@ -16,6 +16,7 @@ from typing import Optional, Dict, Any, List
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import *
+from observability import traceable
 
 
 class MCPTools:
@@ -24,6 +25,7 @@ class MCPTools:
     # ---- MONITORING TOOLS ----
 
     @staticmethod
+    @traceable(run_type="tool", name="mcp.get_recent_metrics")
     def get_recent_metrics(window: int = 50) -> Dict[str, Any]:
         """Get aggregated metrics for the last N recommendations"""
         conn = sqlite3.connect(DB_PATH)
@@ -120,6 +122,7 @@ class MCPTools:
         ]
 
     @staticmethod
+    @traceable(run_type="tool", name="mcp.get_reward_distribution")
     def get_reward_distribution(window: int = 100) -> Dict[str, Any]:
         """Analyze reward distribution to detect drift patterns"""
         conn = sqlite3.connect(DB_PATH)
@@ -209,6 +212,7 @@ class MCPTools:
     # ---- REPAIR TOOLS ----
 
     @staticmethod
+    @traceable(run_type="tool", name="mcp.retrain_rl_agent")
     def retrain_rl_agent(episodes: int = 200) -> Dict[str, Any]:
         """Retrain the RL agent on training subreddit data"""
         from rl_agent import DQNAgent, PostFeatureEncoder
@@ -282,6 +286,7 @@ class MCPTools:
         }
 
     @staticmethod
+    @traceable(run_type="tool", name="mcp.run_validation")
     def run_validation(n_samples: int = 50) -> Dict[str, Any]:
         """Validate current model on training data"""
         from rl_agent import DQNAgent, PostFeatureEncoder
